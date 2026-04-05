@@ -16,18 +16,13 @@ def _get_postcode() -> str:
     return postcode
 
 
-def _send_message(
-    token: str,
-    chat_id: str,
-    message: str,
-) -> None:
-    url = (
-        f"https://api.telegram.org/bot{token}/sendMessage?text={message}&chat_id="
-        + chat_id
-    )
-
+def _send_message(token: str, chat_id: str, message: str) -> None:
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": message}
     try:
-        requests.post(url)
+        # requests will now handle the encoding of the text and chat_id
+        response = requests.post(url, data=payload)
+        response.raise_for_status()  # This will catch 4xx/5xx errors
     except Exception as e:
         raise Exception(f"Error sending message to Telegram: {e}")
 
@@ -38,7 +33,13 @@ def main() -> None:
 
     postcode = _get_postcode()
 
-    _send_message(API_TOKEN, CHAT_ID, f"Today's postcode is {postcode}")
+    # Check if the postcode matches the target
+    if postcode.strip().upper() == "CB1 3RR":
+        message = f"It's your postcode! {postcode}"
+    else:
+        message = f"Today's postcode is {postcode}"
+
+    _send_message(API_TOKEN, CHAT_ID, message)
 
 
 def lambda_handler(event, context):

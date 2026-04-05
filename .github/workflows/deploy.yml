@@ -1,0 +1,48 @@
+name: Deploy to Lambda
+
+permissions:
+  id-token: write  # This is required for OIDC
+  contents: read   # This is required to checkout the code
+
+on:
+  push:
+    branches:
+      - main  # Triggers when you push to the main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # Match your Lambda runtime
+
+      - name: Install dependencies
+        run: |
+          mkdir -p dist
+          pip install -r pickmypostcode/requirements.txt -t dist/
+          cp pickmypostcode/lambda_function.py dist/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubLambdaDeployRole
+          aws-region: us-east-1
+          mask-aws-account-id: true
+
+      - name: Zip and Update Lambda
+        run: |
+          cd dist
+          zip -r ../deploy.zip .
+          cd ..
+          aws lambda update-function-code \
+            --function-name pickmypostcode \
+            --zip-file fileb://deploy.zip

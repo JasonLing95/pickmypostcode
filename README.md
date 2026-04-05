@@ -6,7 +6,7 @@ Automate looking up daily postcode on PickMyPostcode (https://pickmypostcode.com
 2. Telegram - to send message to Telegram
 
 # Environments Required
-1. `API_TOKEN` (Telegram)
+1. `TELEGRAM_API` (Telegram)
 2. `CHAT_ID` (Telegram Channel ID)
 
 # Deployment
